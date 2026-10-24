@@ -69,6 +69,23 @@ if (!IS_PRODUCTION) {
   );
 }
 
+// ── Root route ───────────────────────────────────────────────────────────────
+app.get('/', (_req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'SWAN Lead Management System API is running',
+    version: '1.0.0',
+    endpoints: {
+      health: '/api/health',
+      docs: '/api/docs',
+      auth: '/api/v1/auth',
+      leads: '/api/v1/leads',
+      dashboard: '/api/v1/dashboard',
+      users: '/api/v1/users',
+    },
+  });
+});
+
 // ── Health check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) => {
   res.status(200).json({ success: true, data: { status: 'ok', timestamp: new Date().toISOString() } });
