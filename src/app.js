@@ -32,12 +32,18 @@ app.use(
   cors({
     origin: (origin, callback) => {
       // Allow requests with no origin (server-to-server, curl)
-      if (!origin || CLIENT_ORIGINS.includes(origin)) return callback(null, true);
+      if (
+        !origin ||
+        CLIENT_ORIGINS.includes(origin) ||
+        (origin.endsWith('.vercel.app') && origin.startsWith('https://'))
+      ) {
+        return callback(null, true);
+      }
       callback(new Error(`CORS: origin ${origin} not allowed`));
     },
     credentials: true, // Required for cookie-based auth
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Accept'],
+    allowedHeaders: ['Content-Type', 'Accept', 'Authorization'],
   })
 );
 

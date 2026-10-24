@@ -28,12 +28,24 @@ import { logger } from '../utils/logger.js';
  */
 export function errorHandler(err, req, res, _next) {
   // Log the error with request context (no sensitive data - logger sanitises)
-  logger.error(err.message, {
-    path: req.path,
-    method: req.method,
-    statusCode: err.statusCode || 500,
-    stack: IS_PRODUCTION ? undefined : err.stack,
-  });
+  const statusCode = err.statusCode || 500;
+  if (statusCode >= 500) {
+    logger.error(err.message, {
+      path: req.path,
+      method: req.method,
+      statusCode,
+      stack: IS_PRODUCTION ? undefined : err.stack,
+    });
+  } else if (statusCode === 401 && req.path === '/api/v1/auth/me') {
+    // Expected on initial page load when no user is logged in yet
+    logger.debug(err.message, { path: req.path, method: req.method, statusCode });
+  } else {
+    logger.warn(err.message, {
+      path: req.path,
+      method: req.method,
+      statusCode,
+    });
+  }
 
   // ── Mongoose ValidationError ───────────────────────────────────────────────
   if (err.name === 'ValidationError') {

@@ -16,8 +16,12 @@ import { JWT_SECRET } from '../config/index.js';
  * Returns 401 if no token, invalid token, or user not found.
  */
 export const protect = asyncHandler(async (req, _res, next) => {
-  // Read token from httpOnly cookie
-  const token = req.cookies?.token;
+  // Read token from httpOnly cookie or Authorization header
+  let token = req.cookies?.token;
+
+  if (!token && req.headers.authorization?.startsWith('Bearer ')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
 
   if (!token) {
     throw new AppError('Not authenticated. Please log in.', 401, 'UNAUTHENTICATED');

@@ -13,7 +13,9 @@ import { successResponse } from '../utils/helpers.js';
 export const register = asyncHandler(async (req, res) => {
   const { user, token } = await authService.register(req.body);
   res.cookie('token', token, authService.cookieOptions());
-  res.status(201).json(successResponse(user));
+  const userData = user.toJSON ? user.toJSON() : user;
+  delete userData.password;
+  res.status(201).json(successResponse({ ...userData, token }));
 });
 
 /**
@@ -22,7 +24,9 @@ export const register = asyncHandler(async (req, res) => {
 export const login = asyncHandler(async (req, res) => {
   const { user, token } = await authService.login(req.body);
   res.cookie('token', token, authService.cookieOptions());
-  res.status(200).json(successResponse(user));
+  const userData = user.toJSON ? user.toJSON() : user;
+  delete userData.password;
+  res.status(200).json(successResponse({ ...userData, token }));
 });
 
 /**
