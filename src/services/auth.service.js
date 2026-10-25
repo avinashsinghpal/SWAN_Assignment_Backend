@@ -15,6 +15,7 @@ import {
   COOKIE_SECURE,
   COOKIE_SAME_SITE,
   COOKIE_MAX_AGE_MS,
+  ADMIN_SECRET_KEY,
 } from '../config/index.js';
 
 const BCRYPT_ROUNDS = 12;
@@ -50,7 +51,7 @@ function signToken(userId) {
  * @returns {Promise<{ user: object, token: string }>}
  */
 export async function register(data) {
-  const { name, email, password } = data;
+  const { name, email, password, role = 'SALES', adminSecretKey } = data;
 
   // Check for existing user (duplicate email handled by unique index -> 409 in error handler,
   // but we check explicitly to give a cleaner message)
@@ -59,13 +60,21 @@ export async function register(data) {
     throw new AppError('An account with this email already exists.', 409, 'DUPLICATE_EMAIL');
   }
 
-  // The first user becomes ADMIN
   const userCount = await User.countDocuments();
-  const role = userCount === 0 ? 'ADMIN' : 'SALES';
+
+  let assignedRole = 'SALES';
+  if (role === 'ADMIN') {
+    if (!adminSecretKey || adminSecretKey.trim() !== ADMIN_SECRET_KEY) {
+      throw new AppError('Invalid administrator secret key.', 403, 'INVALID_ADMIN_SECRET');
+    }
+    assignedRole = 'ADMIN';
+  } else if (userCount === 0) {
+    assignedRole = 'ADMIN';
+  }
 
   const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
-  const user = await User.create({ name, email, password: hashedPassword, role });
+  const user = await User.create({ name, email, password: hashedPassword, role: assignedRole });
 
   const token = signToken(user._id.toString());
   return { user, token };

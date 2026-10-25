@@ -35,12 +35,60 @@ describe('POST /api/v1/auth/register', () => {
     expect(res.body.data.role).toBe('ADMIN');
   });
 
-  it('second registered user gets SALES role', async () => {
+  it('second registered user gets SALES role by default', async () => {
     await request(app).post('/api/v1/auth/register').send(VALID_USER);
     const res = await request(app)
       .post('/api/v1/auth/register')
       .send({ name: 'Sales User', email: 'sales@example.com', password: 'TestPass1', confirmPassword: 'TestPass1' });
     expect(res.body.data.role).toBe('SALES');
+  });
+
+  it('allows registering as additional ADMIN with valid secret key', async () => {
+    await request(app).post('/api/v1/auth/register').send(VALID_USER);
+    const res = await request(app)
+      .post('/api/v1/auth/register')
+      .send({
+        name: 'Second Admin',
+        email: 'admin2@example.com',
+        password: 'TestPass1',
+        confirmPassword: 'TestPass1',
+        role: 'ADMIN',
+        adminSecretKey: 'swan_admin_secret_key_2026',
+      });
+    expect(res.status).toBe(201);
+    expect(res.body.data.role).toBe('ADMIN');
+  });
+
+  it('rejects ADMIN registration with invalid secret key with 403', async () => {
+    await request(app).post('/api/v1/auth/register').send(VALID_USER);
+    const res = await request(app)
+      .post('/api/v1/auth/register')
+      .send({
+        name: 'Fake Admin',
+        email: 'fakeadmin@example.com',
+        password: 'TestPass1',
+        confirmPassword: 'TestPass1',
+        role: 'ADMIN',
+        adminSecretKey: 'wrong_secret_key',
+      });
+    expect(res.status).toBe(403);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.code).toBe('INVALID_ADMIN_SECRET');
+  });
+
+  it('rejects ADMIN registration without secret key with 422', async () => {
+    await request(app).post('/api/v1/auth/register').send(VALID_USER);
+    const res = await request(app)
+      .post('/api/v1/auth/register')
+      .send({
+        name: 'NoKey Admin',
+        email: 'nokey@example.com',
+        password: 'TestPass1',
+        confirmPassword: 'TestPass1',
+        role: 'ADMIN',
+      });
+    expect(res.status).toBe(422);
+    expect(res.body.success).toBe(false);
   });
 
   it('returns 409 for duplicate email', async () => {

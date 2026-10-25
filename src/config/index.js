@@ -48,6 +48,9 @@ export const AUTH_RATE_LIMIT_WINDOW_MS = parseInt(
 /** @type {number} */
 export const AUTH_RATE_LIMIT_MAX = parseInt(process.env.AUTH_RATE_LIMIT_MAX || '20', 10);
 
+/** @type {string} */
+export const ADMIN_SECRET_KEY = process.env.ADMIN_SECRET_KEY || 'swan_admin_secret_key_2026';
+
 // Validate production configuration
 if (IS_PRODUCTION) {
   if (!process.env.MONGODB_URI || process.env.MONGODB_URI.includes('localhost') || process.env.MONGODB_URI.includes('127.0.0.1')) {
